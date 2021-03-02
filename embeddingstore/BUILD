@@ -15,6 +15,17 @@ cc_binary(
     ],
     deps = [
         ":server",
+        "@com_github_google_glog//:glog",
+    ],
+)
+
+proto_library(
+    name = "embedding_store_proto",
+    srcs = [
+        "embedding_store.proto",
+    ],
+    visibility = [
+        "//visibility:public",
     ],
 )
 
@@ -32,8 +43,30 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
-        ":embedding_store",
+        ":controller",
+        ":file_handler",
         ":embedding_store_grpc",
+        "@com_github_google_glog//:glog",
+    ],
+)
+
+cc_library(
+    name = "controller",
+    srcs =
+        [
+            "controller.cc",
+        ],
+    hdrs =
+        [
+            "controller.h",
+        ],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+        ":embedding_store",
+        "@rocksdb",
+        "@com_github_google_glog//:glog",
     ],
 )
 
@@ -51,7 +84,9 @@ cc_library(
         "//visibility:public",
     ],
     deps = [
+        ":embedding_store_grpc",
         "@hnswlib",
+        "@com_github_google_glog//:glog",
     ],
 )
 
@@ -71,22 +106,13 @@ cc_library(
     deps = [
         ":embedding_store_grpc",
         "@rocksdb",
+        "@com_github_google_glog//:glog",
     ],
 )
 
 cpp_grpc_library(
     name = "embedding_store_grpc",
     deps = [":embedding_store_proto"],
-)
-
-proto_library(
-    name = "embedding_store_proto",
-    srcs = [
-        "embedding_store.proto",
-    ],
-    visibility = [
-        "//visibility:public",
-    ],
 )
 
 cc_library(
@@ -106,5 +132,24 @@ cc_library(
         ":index",
         ":storage",
         "@rocksdb",
+        "@com_github_google_glog//:glog",
     ],
 )
+
+cc_library(
+    name = "file_handler",
+    srcs =
+        [
+            "file_handler.cc",
+        ],
+    hdrs =
+        [
+            "file_handler.h",
+        ],
+    visibility = [
+        "//visibility:public",
+    ],
+    deps = [
+    ],
+)
+

@@ -7,14 +7,61 @@ syntax = "proto3";
 package featureform.embedding.proto;
 
 service EmbeddingStore {
+  rpc CreateStore(CreateStoreRequest) returns (CreateStoreResponse) {}
+  rpc DeleteStore(DeleteStoreRequest) returns (DeleteStoreResponse) {}
+  rpc Download(DownloadRequest) returns (stream DownloadResponse) {}
+  rpc Upload(stream UploadRequest) returns (UploadResponse) {}
   rpc Set(SetRequest) returns (SetResponse) {}
   rpc Get(GetRequest) returns (GetResponse) {}
   rpc MultiSet(stream MultiSetRequest) returns (MultiSetResponse) {}
+  rpc GetNeighbors(GetNeighborsRequest) returns (stream Neighbor) {}
+}
+
+message CreateStoreRequest {
+  string store_name = 1;
+  int64 dimensions = 2;
+}
+
+message CreateStoreResponse {
+  // Purposely empty.
+}
+
+message DeleteStoreRequest {
+  string store_name = 1;
+}
+
+message DeleteStoreResponse {
+  // Purposely empty.
+}
+
+message DownloadRequest {
+  string store_name = 1;
+}
+
+message DownloadResponse {
+  bytes chunk = 1;
+}
+
+message UploadRequestHeader {
+  string store_name = 1;
+  bool do_append = 2;
+}
+
+message UploadRequest {
+  oneof request {
+    UploadRequestHeader header = 1;
+    bytes chunk = 2;
+  }
+}
+
+message UploadResponse {
+  bytes chunk = 1;
 }
 
 message SetRequest {
-  string key = 1;
-  Embedding embedding = 2;
+  string store_name = 1;
+  string key = 2;
+  Embedding embedding = 3;
 }
 
 message SetResponse {
@@ -22,7 +69,8 @@ message SetResponse {
 }
 
 message GetRequest {
-  string key = 1;
+  string store_name = 1;
+  string key = 2;
 }
 
 message GetResponse {
@@ -30,8 +78,9 @@ message GetResponse {
 }
 
 message MultiSetRequest {
-  string key = 1;
-  Embedding embedding = 2;
+  string store_name = 1;
+  string key = 2;
+  Embedding embedding = 3;
 }
 
 message MultiSetResponse {
@@ -39,5 +88,27 @@ message MultiSetResponse {
 }
 
 message Embedding {
-  repeated float values = 1;
+  repeated double values = 1;
+}
+
+message KeyedEmbedding {
+  string key = 1;
+  repeated double values = 2;
+}
+
+message Neighbor {
+  string key = 1;
+  double distance = 2;
+}
+
+message GetNeighborsRequest {
+  string store_name = 1;
+  string key = 2;
+  int64 number = 3;
+}
+
+message TableMetadata {
+  string path = 1;
+  string name = 2;
+  int64 dimensions = 3;
 }

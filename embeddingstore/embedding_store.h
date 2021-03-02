@@ -8,6 +8,7 @@
 #include <optional>
 #include <unordered_map>
 
+#include "embeddingstore/embedding_store.grpc.pb.h"
 #include "index.h"
 #include "storage.h"
 
@@ -17,18 +18,37 @@ namespace embedding {
 
 class EmbeddingStore {
  public:
-  static std::unique_ptr<EmbeddingStore> load_or_create(std::string path, int dims);
+  static std::unique_ptr<EmbeddingStore> load_or_create(std::string path,
+                                                        std::string name,
+                                                        int dims);
+  static std::unique_ptr<EmbeddingStore> load_or_create_with_index(
+      std::string path, std::string name, int dims);
   void set(std::string key, std::vector<float> value);
-  const std::vector<float>& get(const std::string& key) const;
-  std::shared_ptr<const ANNIndex> create_ann_index();
-  std::shared_ptr<const ANNIndex> get_ann_index() const;
+  const std::vector<float> get(const std::string& key) const;
+  const bool check_exists(const std::string& key) const;
+  std::shared_ptr<const ANNIndex> get_or_create_index();
+  std::shared_ptr<const ANNIndex> get_index() const;
+  void seed_index();
+  std::vector<proto::Neighbor> get_neighbors(const std::string& key,
+                                             size_t num) const;
+  std::string get_path() const;
+  std::string get_name() const;
+  void set_name(std::string name);
+  int get_dimensions() const;
+  void import_proto(const std::string& filepath);
+  std::string save(bool save_index);
+  void close();
+  void erase();
 
  private:
-  EmbeddingStore(std::unique_ptr<EmbeddingStorage> storage, int dims);
+  EmbeddingStore(std::unique_ptr<EmbeddingStorage> storage, std::string path,
+                 std::string name, int dims);
   std::unique_ptr<EmbeddingStorage> storage_;
+  std::string path_;
+  std::string name_;
   int dims_;
-  std::unordered_map<std::string, std::vector<float>> data_;
   std::shared_ptr<ANNIndex> idx_;
 };
-}
-}
+
+}  // namespace embedding
+}  // namespace featureform

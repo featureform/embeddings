@@ -3,7 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import sys
-import client
+import embeddings.client
 
 # When run, it takes a command per line:
 # Either:
@@ -11,7 +11,7 @@ import client
 # OR
 # set [key] [values...]
 if __name__ == '__main__':
-    client = client.EmbeddingStoreClient()
+    client = client.Client()
     for line in sys.stdin:
         line = line.rstrip()
         tokens = line.split()
