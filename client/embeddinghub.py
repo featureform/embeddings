@@ -19,9 +19,16 @@ from client import embedding_store_pb2
 
 class EmbeddingHubClient:
 
-    def __init__(self, host="localhost", port=50051):
-        connection_str = "%.%".format(host, port)
-        self._channel = grpc.insecure_channel('localhost:50051')
+    def grpc_channel(host="0.0.0.0", port=50051):
+        connection_str = "{}:{}".format(host, port)
+        return grpc.insecure_channel(connection_str,
+                                     options=(('grpc.enable_http_proxy', 0),))
+
+    def __init__(self, grpc_channel=None, host="0.0.0.0", port=50051):
+        if grpc_channel is not None:
+            self._channel = grpc_channel
+        else:
+            self._channel = EmbeddingHubClient.grpc_channel(host, port)
         self._stub = embedding_store_pb2_grpc.EmbeddingHubStub(self._channel)
 
     def close(self):
@@ -42,7 +49,7 @@ class EmbeddingHubClient:
             have.
         """
         req = embedding_store_pb2.CreateSpaceRequest()
-        req.name = name
+        req.name = str(name)
         req.dims = dims
         self._stub.CreateSpace(req)
 
@@ -56,7 +63,7 @@ class EmbeddingHubClient:
             name: The name of the space to freeze.
         """
         req = embedding_store_pb2.FreezeSpaceRequest()
-        req.name = name
+        req.name = str(name)
         self._stub.FreezeSpace(req)
 
     def set(self, space, key, embedding):
@@ -72,8 +79,8 @@ class EmbeddingHubClient:
             embedding: A python list of the embedding vector to be stored. 
         """
         req = embedding_store_pb2.SetRequest()
-        req.space = space
-        req.key = key
+        req.space = str(space)
+        req.key = str(key)
         req.embedding.values[:] = embedding
         try:
             self._stub.Set(req)
@@ -93,7 +100,7 @@ class EmbeddingHubClient:
             An embedding, which is a python list of floats.
         """
         resp = self._stub.Get(
-            embedding_store_pb2.GetRequest(space=space, key=key))
+            embedding_store_pb2.GetRequest(space=str(space), key=str(key)))
         return resp.embedding.values
 
     def multiset(self, space, embedding_dict):
@@ -136,8 +143,8 @@ class EmbeddingHubClient:
         Returns:
             A num size list of embedding vectors that are closest to the provided vector embedding.
         """
-        req = embedding_store_pb2.NearestNeighborRequest(space=space,
-                                                         key=key,
+        req = embedding_store_pb2.NearestNeighborRequest(space=str(space),
+                                                         key=str(key),
                                                          num=num)
         return self._stub.NearestNeighbor(req).keys
 
@@ -154,8 +161,8 @@ class EmbeddingHubClient:
         """
         for key, embedding in embedding_dict.items():
             req = embedding_store_pb2.MultiSetRequest()
-            req.space = space
-            req.key = key
+            req.space = str(space)
+            req.key = str(key)
             req.embedding.values[:] = embedding
             yield req
 
@@ -171,8 +178,8 @@ class EmbeddingHubClient:
         """
         for key in keys:
             req = embedding_store_pb2.MultiGetRequest()
-            req.space = space
-            req.key = key
+            req.space = str(space)
+            req.key = str(key)
             yield req
 
     def _embedding_iter(self, resps):
